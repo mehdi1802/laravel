@@ -13,6 +13,15 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+Route::post('/login', 'AuthController@authenticate');
+
+/**
+ * We used middleware to make sure that these api calls only accessible to 
+ * authenticated users
+ */
+Route::middleware('jwt.auth')->group(function () {
+    Route::post('/users/update/{user_id}', 'UserController@updateUser');
+    Route::post('/users/create/', 'UserController@addUser');
+    Route::get('/users', 'UserController@getAll');
+    
 });

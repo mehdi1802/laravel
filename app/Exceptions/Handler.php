@@ -4,6 +4,10 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -46,6 +50,28 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        /**
+         * This block of code validate the token and returns proper message.
+         * There are 4 different situations:
+         * 1. Token is expired
+         * 2. Token is not valid
+         * 3. Token is blacklisted
+         * 4. The token is not provided
+         *  ref. https://github.com/tymondesigns/jwt-auth/wiki/Authentication
+         */
+        if ($exception instanceof UnauthorizedHttpException) {
+            $preException = $exception->getPrevious();
+            if ($preException instanceof TokenExpiredException) {
+                return response()->json(['error' => 'TOKEN_EXPIRED']);
+            } else if ($preException instanceof TokenInvalidException) {
+                return response()->json(['error' => 'TOKEN_INVALID']);
+            } else if ($preException instanceof TokenBlacklistedException) {
+                 return response()->json(['error' => 'TOKEN_BLACKLISTED']);
+          }
+          if ($exception->getMessage() === 'Token not provided') {
+              return response()->json(['error' => 'Token not provided']);
+          }
+        }
         return parent::render($request, $exception);
     }
 }
